@@ -11,7 +11,7 @@
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
- * Please follow coding guidelines 
+ * Please follow coding guidelines
  * http://svn.digium.com/view/asterisk/trunk/doc/CODING-GUIDELINES
  */
 

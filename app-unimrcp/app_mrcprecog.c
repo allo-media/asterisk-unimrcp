@@ -15,7 +15,7 @@
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
- * Please follow coding guidelines 
+ * Please follow coding guidelines
  * http://svn.digium.com/view/asterisk/trunk/doc/CODING-GUIDELINES
  */
 
@@ -41,7 +41,7 @@
  * \brief MRCPRecog application
  *
  * \author\verbatim J.W.F. Thirion <derik@molo.co.za> \endverbatim
- * 
+ *
  * MRCPRecog application
  * \ingroup applications
  */
@@ -99,14 +99,14 @@
 					<option name="enm"> <para>Early nomatch (true/false).</para> </option>
 					<option name="iwu"> <para>Input waveform URI.</para> </option>
 					<option name="mt"> <para>Media type.</para> </option>
-					<option name="epe"> <para>Exit on play error 
+					<option name="epe"> <para>Exit on play error
 						(1: terminate recognition on file play error, 0: continue even if file play fails).</para>
 					</option>
-					<option name="uer"> <para>URI-encoded results 
+					<option name="uer"> <para>URI-encoded results
 						(1: URI-encode NLMSL results, 0: do not encode).</para>
 					</option>
 					<option name="od"> <para>Output (prompt) delimiters.</para> </option>
-					<option name="sit"> <para>Start input timers value (0: no, 1: yes [start with RECOGNIZE], 
+					<option name="sit"> <para>Start input timers value (0: no, 1: yes [start with RECOGNIZE],
 						2: auto [start when prompt is finished]).</para>
 					</option>
 					<option name="plt"> <para>Persistent lifetime (0: no [MRCP session is created and destroyed dynamically],
@@ -281,7 +281,7 @@ static apt_bool_t speech_on_channel_add(mrcp_application_t *application, mrcp_se
 				schannel->session_id = apr_pstrdup(schannel->pool, session_id->buf);
 			}
 		}
-		
+
 		ast_log(LOG_NOTICE, "(%s) Channel ready codec=%s, sample rate=%d\n",
 			schannel->name,
 			codec_name,
@@ -300,7 +300,7 @@ static apt_bool_t speech_on_channel_add(mrcp_application_t *application, mrcp_se
 
 /* Start recognizer's input timers. */
 static int recog_channel_start_input_timers(speech_channel_t *schannel)
-{   
+{
 	int status = 0;
 
 	if (!schannel) {
@@ -333,7 +333,7 @@ static int recog_channel_start_input_timers(speech_channel_t *schannel)
 			status = -1;
 		}
 	}
- 
+
 	apr_thread_mutex_unlock(schannel->mutex);
 	return status;
 }
@@ -1137,11 +1137,11 @@ static int app_recog_exec(struct ast_channel *chan, ast_app_data data)
 	/* Check session lifetime. */
 	if ((mrcprecog_options.flags & MRCPRECOG_PERSISTENT_LIFETIME) == MRCPRECOG_PERSISTENT_LIFETIME) {
 		if (!ast_strlen_zero(mrcprecog_options.params[OPT_ARG_PERSISTENT_LIFETIME])) {
-			lifetime = (atoi(mrcprecog_options.params[OPT_ARG_PERSISTENT_LIFETIME]) == 0) ? 
+			lifetime = (atoi(mrcprecog_options.params[OPT_ARG_PERSISTENT_LIFETIME]) == 0) ?
 				APP_SESSION_LIFETIME_DYNAMIC : APP_SESSION_LIFETIME_PERSISTENT;
 		}
 	}
-	
+
 	/* Get application datastore. */
 	app_session_t *app_session = app_datastore_session_add(datastore, entry);
 	if (!app_session) {
@@ -1284,7 +1284,7 @@ static int app_recog_exec(struct ast_channel *chan, ast_app_data data)
 			recog_channel_get_results(app_session->recog_channel, &completion_cause, NULL, NULL);
 			if (completion_cause)
 				pbx_builtin_setvar_helper(chan, "RECOG_COMPLETION_CAUSE", completion_cause);
-			
+
 			return mrcprecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 		}
 
@@ -1554,7 +1554,7 @@ static int app_recog_exec(struct ast_channel *chan, ast_app_data data)
 			ast_log(LOG_WARNING, "(%s) Unable to retrieve result\n", name);
 			return mrcprecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 		}
-	
+
 		if (result) {
 			/* Store the results for further reference from the dialplan. */
 			apr_size_t result_len = strlen(result);
