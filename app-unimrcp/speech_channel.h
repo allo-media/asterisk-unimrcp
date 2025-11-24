@@ -11,7 +11,7 @@
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
- * Please follow coding guidelines 
+ * Please follow coding guidelines
  * http://svn.digium.com/view/asterisk/trunk/doc/CODING-GUIDELINES
  */
 
@@ -19,19 +19,19 @@
 #define SPEECH_CHANNEL_H
 
 /*
- * Set SPEECH_CHANNEL_DUMP to 1 to store input and output streams 
+ * Set SPEECH_CHANNEL_DUMP to 1 to store input and output streams
  * in raw header-less files for further debugging.
  */
 #define SPEECH_CHANNEL_DUMP   0
 
 /*
- * Specifies the output directory to store streams in, used if 
+ * Specifies the output directory to store streams in, used if
  * SPEECH_CHANNEL_DUMP is enabled.
  */
 #define SPEECH_CHANNEL_DUMP_DIR   UNIMRCP_DIR_LOCATION"/var"
 
 /*
- * Set SPEECH_CHANNEL_TRACE to 1 to trace a statement per 
+ * Set SPEECH_CHANNEL_TRACE to 1 to trace a statement per
  * channel read or write attempt.
  */
 #define SPEECH_CHANNEL_TRACE   0
@@ -136,7 +136,7 @@ enum grammar_type_t {
 	GRAMMAR_TYPE_JSGF,
 	/* application/xml. */
 	GRAMMAR_TYPE_XML
-};  
+};
 typedef enum grammar_type_t grammar_type_t;
 
 /* A grammar for recognition. */
@@ -153,7 +153,7 @@ typedef struct grammar_t grammar_t;
 /* Data specific to the recognizer. */
 struct recognizer_data_t {
 	/* The available grammars. */
-	apr_hash_t *grammars;
+	apr_array_header_t *grammars;
 	/* Recognition result. */
 	const char *result;
 	/* Completion cause. */
@@ -167,7 +167,7 @@ struct recognizer_data_t {
 };
 typedef struct recognizer_data_t recognizer_data_t;
 
-/* Use this function to set the current channel state without locking the 
+/* Use this function to set the current channel state without locking the
  * speech channel.  Do this if you already have the speech channel locked.
  */
 void speech_channel_set_state_unlocked(speech_channel_t *schannel, speech_channel_state_t state);
@@ -212,7 +212,7 @@ int speech_channel_ast_write(speech_channel_t *schannel, void *data, apr_size_t 
 /* Convert channel status to string. */
 const char *speech_channel_status_to_string(speech_channel_status_t status);
 
-/* 
+/*
  * Determine synthesis content type by specified text.
  * @param schannel the speech channel to use
  * @param text the input text
@@ -221,7 +221,7 @@ const char *speech_channel_status_to_string(speech_channel_status_t status);
  */
 int determine_synth_content_type(speech_channel_t *schannel, const char *text, const char **content, const char **content_type);
 
-/* 
+/*
  * Determine grammar type by specified grammar data.
  * @param schannel the speech channel to use
  * @param grammar_data the input grammar data
@@ -230,7 +230,7 @@ int determine_synth_content_type(speech_channel_t *schannel, const char *text, c
  */
 int determine_grammar_type(speech_channel_t *schannel, const char *grammar_data, const char **grammar_content, grammar_type_t *grammar_type);
 
-/* 
+/*
  * Determine prompt type by specified text.
  * @param text the input text
  * @param content the output content

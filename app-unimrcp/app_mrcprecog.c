@@ -47,6 +47,7 @@
  */
 
 /* Asterisk includes. */
+#include "apr_tables.h"
 #include "ast_compat_defs.h"
 
 #include "asterisk/channel.h"
@@ -57,6 +58,7 @@
 
 /* UniMRCP includes. */
 #include "app_datastore.h"
+#include "speech_channel.h"
 
 /*** DOCUMENTATION
 	<application name="MRCPRecog" language="en_US">
@@ -531,15 +533,11 @@ static int recog_channel_start(speech_channel_t *schannel, const char *name, int
 
 	r->timers_started = start_input_timers;
 
-	apr_hash_index_t *hi;
-	void *val;
+	int gidx;
 	int length = 0;
 	char grammar_refs[4096];
-	for (hi = apr_hash_first(schannel->pool, r->grammars); hi; hi = apr_hash_next(hi)) {
-		apr_hash_this(hi, NULL, NULL, &val);
-		grammar = val;
-		if (!grammar) 	continue;
-
+	for (gidx =0; gidx < r->grammars->nelts; gidx++) {
+		grammar = (grammar_t *) r->grammars->elts + gidx;
 		int grammar_len = strlen(grammar->data);
 		if (length + grammar_len + 2 > sizeof(grammar_refs) - 1) {
 			break;
@@ -552,6 +550,7 @@ static int recog_channel_start(speech_channel_t *schannel, const char *name, int
 		memcpy(grammar_refs + length, grammar->data, grammar_len);
 		length += grammar_len;
 	}
+
 	if (length == 0) {
 		ast_log(LOG_ERROR, "(%s) No grammars specified\n", schannel->name);
 
@@ -623,7 +622,6 @@ static int recog_channel_start(speech_channel_t *schannel, const char *name, int
 static int recog_channel_load_grammar(speech_channel_t *schannel, const char *name, grammar_type_t type, const char *data)
 {
 	int status = 0;
-	grammar_t *g = NULL;
 	char ldata[256];
 
 	if (!schannel || !name || !data) {
@@ -696,12 +694,20 @@ static int recog_channel_load_grammar(speech_channel_t *schannel, const char *na
 		type = GRAMMAR_TYPE_URI;
 	}
 
-	/* Create the grammar and save it. */
-	if ((status = grammar_create(&g, name, type, data, schannel->pool)) == 0) {
-		recognizer_data_t *r = (recognizer_data_t *)schannel->data;
 
-		if (r != NULL)
-			apr_hash_set(r->grammars, apr_pstrdup(schannel->pool, g->name), APR_HASH_KEY_STRING, g);
+	// Create grammar and add to list
+	recognizer_data_t *r = (recognizer_data_t *)schannel->data;
+	if (r != NULL) {
+		grammar_t *g = apr_array_push(r->grammars);
+		if (g != NULL) {
+			g->name = apr_pstrdup(r->grammars->pool, name);
+			g->type = type;
+			g->data = apr_pstrdup(r->grammars->pool, data);
+		} else {
+			status = -1;
+		}
+	} else {
+		status = -1;
 	}
 
 	apr_thread_mutex_unlock(schannel->mutex);
