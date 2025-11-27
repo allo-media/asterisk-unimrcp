@@ -15,7 +15,7 @@
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
- * Please follow coding guidelines 
+ * Please follow coding guidelines
  * http://svn.digium.com/view/asterisk/trunk/doc/CODING-GUIDELINES
  */
 
@@ -41,12 +41,13 @@
  * \brief MRCPRecog application
  *
  * \author\verbatim J.W.F. Thirion <derik@molo.co.za> \endverbatim
- * 
+ *
  * MRCPRecog application
  * \ingroup applications
  */
 
 /* Asterisk includes. */
+#include "apr_tables.h"
 #include "ast_compat_defs.h"
 
 #include "asterisk/channel.h"
@@ -57,6 +58,7 @@
 
 /* UniMRCP includes. */
 #include "app_datastore.h"
+#include "speech_channel.h"
 
 /*** DOCUMENTATION
 	<application name="MRCPRecog" language="en_US">
@@ -99,14 +101,14 @@
 					<option name="enm"> <para>Early nomatch (true/false).</para> </option>
 					<option name="iwu"> <para>Input waveform URI.</para> </option>
 					<option name="mt"> <para>Media type.</para> </option>
-					<option name="epe"> <para>Exit on play error 
+					<option name="epe"> <para>Exit on play error
 						(1: terminate recognition on file play error, 0: continue even if file play fails).</para>
 					</option>
-					<option name="uer"> <para>URI-encoded results 
+					<option name="uer"> <para>URI-encoded results
 						(1: URI-encode NLMSL results, 0: do not encode).</para>
 					</option>
 					<option name="od"> <para>Output (prompt) delimiters.</para> </option>
-					<option name="sit"> <para>Start input timers value (0: no, 1: yes [start with RECOGNIZE], 
+					<option name="sit"> <para>Start input timers value (0: no, 1: yes [start with RECOGNIZE],
 						2: auto [start when prompt is finished]).</para>
 					</option>
 					<option name="plt"> <para>Persistent lifetime (0: no [MRCP session is created and destroyed dynamically],
@@ -281,7 +283,7 @@ static apt_bool_t speech_on_channel_add(mrcp_application_t *application, mrcp_se
 				schannel->session_id = apr_pstrdup(schannel->pool, session_id->buf);
 			}
 		}
-		
+
 		ast_log(LOG_NOTICE, "(%s) Channel ready codec=%s, sample rate=%d\n",
 			schannel->name,
 			codec_name,
@@ -300,7 +302,7 @@ static apt_bool_t speech_on_channel_add(mrcp_application_t *application, mrcp_se
 
 /* Start recognizer's input timers. */
 static int recog_channel_start_input_timers(speech_channel_t *schannel)
-{   
+{
 	int status = 0;
 
 	if (!schannel) {
@@ -333,7 +335,7 @@ static int recog_channel_start_input_timers(speech_channel_t *schannel)
 			status = -1;
 		}
 	}
- 
+
 	apr_thread_mutex_unlock(schannel->mutex);
 	return status;
 }
@@ -531,15 +533,11 @@ static int recog_channel_start(speech_channel_t *schannel, const char *name, int
 
 	r->timers_started = start_input_timers;
 
-	apr_hash_index_t *hi;
-	void *val;
+	int gidx;
 	int length = 0;
 	char grammar_refs[4096];
-	for (hi = apr_hash_first(schannel->pool, r->grammars); hi; hi = apr_hash_next(hi)) {
-		apr_hash_this(hi, NULL, NULL, &val);
-		grammar = val;
-		if (!grammar) 	continue;
-
+	for (gidx =0; gidx < r->grammars->nelts; gidx++) {
+		grammar = (grammar_t *) r->grammars->elts + gidx;
 		int grammar_len = strlen(grammar->data);
 		if (length + grammar_len + 2 > sizeof(grammar_refs) - 1) {
 			break;
@@ -552,6 +550,7 @@ static int recog_channel_start(speech_channel_t *schannel, const char *name, int
 		memcpy(grammar_refs + length, grammar->data, grammar_len);
 		length += grammar_len;
 	}
+
 	if (length == 0) {
 		ast_log(LOG_ERROR, "(%s) No grammars specified\n", schannel->name);
 
@@ -623,7 +622,6 @@ static int recog_channel_start(speech_channel_t *schannel, const char *name, int
 static int recog_channel_load_grammar(speech_channel_t *schannel, const char *name, grammar_type_t type, const char *data)
 {
 	int status = 0;
-	grammar_t *g = NULL;
 	char ldata[256];
 
 	if (!schannel || !name || !data) {
@@ -696,12 +694,20 @@ static int recog_channel_load_grammar(speech_channel_t *schannel, const char *na
 		type = GRAMMAR_TYPE_URI;
 	}
 
-	/* Create the grammar and save it. */
-	if ((status = grammar_create(&g, name, type, data, schannel->pool)) == 0) {
-		recognizer_data_t *r = (recognizer_data_t *)schannel->data;
 
-		if (r != NULL)
-			apr_hash_set(r->grammars, apr_pstrdup(schannel->pool, g->name), APR_HASH_KEY_STRING, g);
+	// Create grammar and add to list
+	recognizer_data_t *r = (recognizer_data_t *)schannel->data;
+	if (r != NULL) {
+		grammar_t *g = apr_array_push(r->grammars);
+		if (g != NULL) {
+			g->name = apr_pstrdup(r->grammars->pool, name);
+			g->type = type;
+			g->data = apr_pstrdup(r->grammars->pool, data);
+		} else {
+			status = -1;
+		}
+	} else {
+		status = -1;
 	}
 
 	apr_thread_mutex_unlock(schannel->mutex);
@@ -1137,11 +1143,11 @@ static int app_recog_exec(struct ast_channel *chan, ast_app_data data)
 	/* Check session lifetime. */
 	if ((mrcprecog_options.flags & MRCPRECOG_PERSISTENT_LIFETIME) == MRCPRECOG_PERSISTENT_LIFETIME) {
 		if (!ast_strlen_zero(mrcprecog_options.params[OPT_ARG_PERSISTENT_LIFETIME])) {
-			lifetime = (atoi(mrcprecog_options.params[OPT_ARG_PERSISTENT_LIFETIME]) == 0) ? 
+			lifetime = (atoi(mrcprecog_options.params[OPT_ARG_PERSISTENT_LIFETIME]) == 0) ?
 				APP_SESSION_LIFETIME_DYNAMIC : APP_SESSION_LIFETIME_PERSISTENT;
 		}
 	}
-	
+
 	/* Get application datastore. */
 	app_session_t *app_session = app_datastore_session_add(datastore, entry);
 	if (!app_session) {
@@ -1284,7 +1290,7 @@ static int app_recog_exec(struct ast_channel *chan, ast_app_data data)
 			recog_channel_get_results(app_session->recog_channel, &completion_cause, NULL, NULL);
 			if (completion_cause)
 				pbx_builtin_setvar_helper(chan, "RECOG_COMPLETION_CAUSE", completion_cause);
-			
+
 			return mrcprecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 		}
 
@@ -1554,7 +1560,7 @@ static int app_recog_exec(struct ast_channel *chan, ast_app_data data)
 			ast_log(LOG_WARNING, "(%s) Unable to retrieve result\n", name);
 			return mrcprecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 		}
-	
+
 		if (result) {
 			/* Store the results for further reference from the dialplan. */
 			apr_size_t result_len = strlen(result);

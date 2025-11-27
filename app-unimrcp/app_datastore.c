@@ -11,7 +11,7 @@
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
- * Please follow coding guidelines 
+ * Please follow coding guidelines
  * http://svn.digium.com/view/asterisk/trunk/doc/CODING-GUIDELINES
  */
 
@@ -161,7 +161,7 @@ typedef struct ast_json_error ast_json_error;
 		</see-also>
 	</function>
  ***/
- 
+
 /* Helper function to destroy application session */
 static void app_session_destroy(app_session_t *app_session)
 {
@@ -205,7 +205,7 @@ app_datastore_t* app_datastore_get(struct ast_channel *chan)
 {
 	app_datastore_t *app_datastore = NULL;
 	struct ast_datastore *datastore;
-	
+
 	datastore = ast_channel_datastore_find(chan, &app_unimrcp_datastore, NULL);
 	if (datastore) {
 		app_datastore = datastore->data;
@@ -235,7 +235,7 @@ app_datastore_t* app_datastore_get(struct ast_channel *chan)
 		datastore->data = app_datastore;
 		ast_channel_datastore_add(chan, datastore);
 	}
-	
+
 	return app_datastore;
 }
 
@@ -244,7 +244,7 @@ app_session_t* app_datastore_session_add(app_datastore_t* app_datastore, const c
 	app_session_t *session;
 	if (!app_datastore || !entry)
 		return NULL;
-	
+
 	session = apr_hash_get(app_datastore->session_table, entry, APR_HASH_KEY_STRING);
 	if (session) {
 		ast_log(LOG_DEBUG, "Ref entry %s from datastore on %s\n", entry, ast_channel_name(app_datastore->chan));
@@ -259,7 +259,7 @@ app_session_t* app_datastore_session_add(app_datastore_t* app_datastore, const c
 		session->synth_channel = NULL;
 		session->readformat = NULL;
 		session->rawreadformat = NULL;
-		session->writeformat = NULL; 
+		session->writeformat = NULL;
 		session->rawwriteformat = NULL;
 		session->nreadformat = NULL;
 		session->nwriteformat = NULL;
@@ -284,12 +284,12 @@ static app_session_t* app_datastore_session_find(struct ast_channel *chan)
 {
 	app_datastore_t *app_datastore = NULL;
 	struct ast_datastore *datastore;
-	
+
 	datastore = ast_channel_datastore_find(chan, &app_unimrcp_datastore, NULL);
 	if (datastore) {
 		app_datastore = datastore->data;
 	}
-	
+
 	if (!app_datastore) {
 		ast_log(LOG_ERROR, "Unable to find app datastore on %s\n", ast_channel_name(chan));
 		return NULL;
@@ -305,7 +305,7 @@ static app_session_t* app_datastore_session_find(struct ast_channel *chan)
 		ast_log(LOG_ERROR, "Unable to find entry %s in app datastore on %s\n", app_datastore->last_recog_entry, ast_channel_name(chan));
 		return NULL;
 	}
-	
+
 	return session;
 }
 
@@ -395,7 +395,7 @@ static int recog_confidence(struct ast_channel *chan, const char *cmd, char *dat
 	app_session_t *app_session = app_datastore_session_find(chan);
 	if(!app_session)
 		return -1;
-	
+
 	nlsml_interpretation_t *interpretation = recog_interpretation_find(app_session, data);
 	char tmp[128];
 
@@ -478,7 +478,7 @@ static int recog_input_mode(struct ast_channel *chan, const char *cmd, char *dat
 	app_session_t *app_session = app_datastore_session_find(chan);
 	if(!app_session)
 		return -1;
-	
+
 	nlsml_interpretation_t *interpretation = recog_interpretation_find(app_session, data);
 	nlsml_input_t *input;
 	const char *mode;
@@ -510,7 +510,7 @@ static int recog_input_confidence(struct ast_channel *chan, const char *cmd, cha
 	app_session_t *app_session = app_datastore_session_find(chan);
 	if(!app_session)
 		return -1;
-	
+
 	nlsml_interpretation_t *interpretation = recog_interpretation_find(app_session, data);
 	nlsml_input_t *input;
 	char tmp[128];
@@ -572,7 +572,7 @@ static int recog_instance_process_xml(app_session_t *app_session, nlsml_instance
 	const apr_xml_elem *elem = nlsml_instance_elem_get(instance);
 	if (!elem)
 		return -1;
-		
+
 	child_elem = recog_instance_find_elem(elem, &path);
 	if(child_elem) {
 		apr_size_t size;
@@ -589,7 +589,7 @@ static ast_json* recog_instance_find_json_object(ast_json *json, const char **pa
 	if ((tmp = strchr(*path, '/'))) {
 		*tmp++ = '\0';
 	}
-	
+
 	ast_json *child_json = NULL;
 	if (ast_json_typeof(json) == AST_JSON_ARRAY) {
 		int index = atoi(*path);
@@ -603,12 +603,12 @@ static ast_json* recog_instance_find_json_object(ast_json *json, const char **pa
 		ast_log(LOG_DEBUG, "No such JSON object %s\n", *path);
 		child_json = ast_json_null();
 	}
-	
+
 	if (tmp) {
 		*path = tmp;
 		return recog_instance_find_json_object(child_json, path);
 	}
-	
+
 	return child_json;
 }
 
@@ -619,7 +619,7 @@ static int recog_instance_process_json(app_session_t *app_session, nlsml_instanc
 	if (!json_string) {
 		return -1;
 	}
-	
+
 	ast_json_error error;
 	ast_json *child_json;
 	ast_json *json = ast_json_load_string(json_string, &error);
@@ -627,7 +627,7 @@ static int recog_instance_process_json(app_session_t *app_session, nlsml_instanc
 		ast_log(LOG_ERROR, "Unable to load JSON: %s\n", error.text);
 		return -1;
 	}
-	
+
 	char* buf = NULL;
 	child_json = recog_instance_find_json_object(json, &path);
 	if (child_json) {
@@ -669,11 +669,11 @@ static int recog_instance_process_json(app_session_t *app_session, nlsml_instanc
 				break;
 		}
 	}
-	
+
 	if (buf) {
 		*text = buf;
 	}
-	
+
 	return 0;
 }
 #else
@@ -740,7 +740,7 @@ int app_datastore_functions_register(struct ast_module *mod)
 }
 
 /* Unregister custom dialplan functions */
-int app_datastore_functions_unregister(struct ast_module *mod)
+int app_datastore_functions_unregister()
 {
 	int res = 0;
 
