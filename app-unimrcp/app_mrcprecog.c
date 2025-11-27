@@ -118,6 +118,7 @@
 					<option name="vsp"> <para>Vendor-specific parameters.</para></option>
 					<option name="nif"> <para>NLSML instance format (either "xml" or "json") used by RECOG_INSTANCE().</para></option>
 					<option name="rnl"> <para>Replace new lines (0: disabled, otherwise: the character to replace new lines with) used by RECOG_INSTANCE().</para></option>
+					<option name="lt"> <para>Logging-Tag.</para> </option>
 				</optionlist>
 			</parameter>
 		</syntax>
@@ -922,6 +923,8 @@ static int mrcprecog_option_apply(mrcprecog_options_t *options, const char *key,
 		apr_hash_set(options->recog_hfs, "Media-Type", APR_HASH_KEY_STRING, value);
 	} else if (strcasecmp(key, "vsp") == 0) {
 		apr_hash_set(options->recog_hfs, "Vendor-Specific-Parameters", APR_HASH_KEY_STRING, value);
+	} else if (strcasecmp(key, "lt") == 0) {
+		apr_hash_set(options->recog_hfs, "Logging-Tag", APR_HASH_KEY_STRING, value);
 	} else if (strcasecmp(key, "p") == 0) {
 		options->flags |= MRCPRECOG_PROFILE;
 		options->params[OPT_ARG_PROFILE] = value;
