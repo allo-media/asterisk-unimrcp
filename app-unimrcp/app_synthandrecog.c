@@ -11,7 +11,7 @@
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
- * Please follow coding guidelines 
+ * Please follow coding guidelines
  * http://svn.digium.com/view/asterisk/trunk/doc/CODING-GUIDELINES
  */
 
@@ -20,7 +20,7 @@
  * \brief MRCP synthesis and recognition application
  *
  * \author\verbatim Arsen Chaloyan <arsen.chaloyan@unimrcp.org> \endverbatim
- * 
+ *
  * \ingroup applications
  */
 
@@ -79,7 +79,7 @@
 					<option name="vg"> <para>Voice gender to use (e.g. "male", "female").</para> </option>
 					<option name="vv"> <para>Voice variant.</para> </option>
 					<option name="a"> <para>Voice age.</para> </option>
-					<option name="uer"> <para>URI-encoded results 
+					<option name="uer"> <para>URI-encoded results
 						(1: URI-encode NLMSL results, 0: do not encode).</para>
 					</option>
 					<option name="od"> <para>Output (prompt) delimiters.</para> </option>
@@ -94,6 +94,7 @@
 					<option name="vsp"> <para>Vendor-specific parameters.</para></option>
 					<option name="nif"> <para>NLSML instance format (either "xml" or "json") used by RECOG_INSTANCE().</para></option>
 					<option name="rnl"> <para>Replace new lines (0: disabled, otherwise: the character to replace new lines with) used by RECOG_INSTANCE().</para></option>
+					<option name="lt"> <para>Logging-Tag.</para> </option>
 				</optionlist>
 			</parameter>
 		</syntax>
@@ -157,7 +158,7 @@ enum sar_option_args {
 	OPT_ARG_STOP_BARGED_SYNTH   = 9,
 	OPT_ARG_INSTANCE_FORMAT     = 10,
 	OPT_ARG_REPLACE_NEW_LINES   = 11,
-	
+
 	/* This MUST be the last value in this enum! */
 	OPT_ARG_ARRAY_SIZE          = 12
 };
@@ -244,7 +245,7 @@ static apt_bool_t speech_on_channel_add(mrcp_application_t *application, mrcp_se
 			descriptor = mrcp_application_sink_descriptor_get(channel);
 		else
 			descriptor = mrcp_application_source_descriptor_get(channel);
-		
+
 		if (!descriptor) {
 			ast_log(LOG_ERROR, "(%s) Unable to determine codec descriptor\n", schannel->name);
 			speech_channel_set_state(schannel, SPEECH_CHANNEL_ERROR);
@@ -274,7 +275,7 @@ static apt_bool_t speech_on_channel_add(mrcp_application_t *application, mrcp_se
 				schannel->session_id = apr_pstrdup(schannel->pool, session_id->buf);
 			}
 		}
-		
+
 		ast_log(LOG_NOTICE, "(%s) Channel ready codec=%s, sample rate=%d\n",
 			schannel->name,
 			codec_name,
@@ -349,7 +350,7 @@ static apt_bool_t synth_on_message_receive(speech_channel_t *schannel, mrcp_mess
 		} else {
 			/* Received unexpected response. */
 			ast_log(LOG_DEBUG, "(%s) Unexpected response, method_id = %d\n", schannel->name, (int)message->start_line.method_id);
-			speech_channel_set_state(schannel, SPEECH_CHANNEL_ERROR); 
+			speech_channel_set_state(schannel, SPEECH_CHANNEL_ERROR);
 		}
 	} else if (message->start_line.message_type == MRCP_MESSAGE_TYPE_EVENT) {
 		/* Received MRCP event. */
@@ -431,7 +432,7 @@ static int synth_channel_speak(speech_channel_t *schannel, const char *content, 
 	}
 
 	/* Set generic header fields (content-type). */
-	if ((generic_header = (mrcp_generic_header_t *)mrcp_generic_header_prepare(mrcp_message)) == NULL) {	
+	if ((generic_header = (mrcp_generic_header_t *)mrcp_generic_header_prepare(mrcp_message)) == NULL) {
 		apr_thread_mutex_unlock(schannel->mutex);
 		return -1;
 	}
@@ -474,10 +475,10 @@ static int synth_channel_speak(speech_channel_t *schannel, const char *content, 
 }
 
 /* Send BARGE-IN-OCCURRED. */
-int synth_channel_bargein_occurred(speech_channel_t *schannel) 
+int synth_channel_bargein_occurred(speech_channel_t *schannel)
 {
 	int status = 0;
-	
+
 	if (!schannel) {
 		ast_log(LOG_ERROR, "bargein_occurred: unknown channel error!\n");
 		return -1;
@@ -515,7 +516,7 @@ int synth_channel_bargein_occurred(speech_channel_t *schannel)
 
 /* Start recognizer's input timers. */
 static int recog_channel_start_input_timers(speech_channel_t *schannel)
-{   
+{
 	int status = 0;
 
 	if (!schannel) {
@@ -548,7 +549,7 @@ static int recog_channel_start_input_timers(speech_channel_t *schannel)
 			status = -1;
 		}
 	}
- 
+
 	apr_thread_mutex_unlock(schannel->mutex);
 	return status;
 }
@@ -1125,8 +1126,10 @@ static int synthandrecog_option_apply(sar_options_t *options, const char *key, c
 		apr_hash_set(options->recog_hfs, "Vendor-Specific-Parameters", APR_HASH_KEY_STRING, value);
 	} else if (strcasecmp(key, "vspsyn") == 0) {
 		apr_hash_set(options->synth_hfs, "Vendor-Specific-Parameters", APR_HASH_KEY_STRING, value);
+	} else if (strcasecmp(key, "lt") == 0) {
+		apr_hash_set(options->recog_hfs, "Logging-Tag", APR_HASH_KEY_STRING, value);
 	} else if (strcasecmp(key, "p") == 0) {
-		/* Set the same profile for synth and recog. There might be a separate 
+		/* Set the same profile for synth and recog. There might be a separate
 		configuration option for each of them in the future. */
 		options->flags |= SAR_RECOG_PROFILE | SAR_SYNTH_PROFILE;
 		options->params[OPT_ARG_RECOG_PROFILE] = value;
@@ -1377,13 +1380,13 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 
 	args.grammar = normalize_input_string(args.grammar);
 	ast_log(LOG_NOTICE, "%s() grammar: %s\n", synthandrecog_name, args.grammar);
-	
+
 	app_datastore_t* datastore = app_datastore_get(chan);
 	if (!datastore) {
 		ast_log(LOG_ERROR, "Unable to retrieve data from app datastore on %s\n", ast_channel_name(chan));
 		return synthandrecog_exit(chan, NULL, SPEECH_CHANNEL_STATUS_ERROR);
 	}
-	
+
 	sar_options.recog_hfs = NULL;
 	sar_options.synth_hfs = NULL;
 	sar_options.flags = 0;
@@ -1419,11 +1422,11 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 	/* Check session lifetime. */
 	if ((sar_options.flags & SAR_PERSISTENT_LIFETIME) == SAR_PERSISTENT_LIFETIME) {
 		if (!ast_strlen_zero(sar_options.params[OPT_ARG_PERSISTENT_LIFETIME])) {
-			lifetime = (atoi(sar_options.params[OPT_ARG_PERSISTENT_LIFETIME]) == 0) ? 
+			lifetime = (atoi(sar_options.params[OPT_ARG_PERSISTENT_LIFETIME]) == 0) ?
 				APP_SESSION_LIFETIME_DYNAMIC : APP_SESSION_LIFETIME_PERSISTENT;
 		}
 	}
-	
+
 	/* Get application datastore. */
 	app_session_t *app_session = app_datastore_session_add(datastore, entry);
 	if (!app_session) {
@@ -1574,7 +1577,7 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 			recog_channel_get_results(app_session->recog_channel, &completion_cause, NULL, NULL);
 			if (completion_cause)
 				pbx_builtin_setvar_helper(chan, "RECOG_COMPLETION_CAUSE", completion_cause);
-			
+
 			return synthandrecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 		}
 
@@ -1704,7 +1707,7 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 		recog_channel_get_results(app_session->recog_channel, &completion_cause, NULL, NULL);
 		if (completion_cause)
 			pbx_builtin_setvar_helper(chan, "RECOG_COMPLETION_CAUSE", completion_cause);
-		
+
 		return synthandrecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 	}
 
@@ -1865,7 +1868,7 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 			ast_log(LOG_WARNING, "(%s) Unable to retrieve result\n", recog_name);
 			return synthandrecog_exit(chan, app_session, SPEECH_CHANNEL_STATUS_ERROR);
 		}
-		
+
 		if (result) {
 			/* Store the results for further reference from the dialplan. */
 			apr_size_t result_len = strlen(result);
